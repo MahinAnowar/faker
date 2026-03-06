@@ -2,6 +2,41 @@ import type { FakerCore } from '../../core';
 import type { NumberRange } from '../../utils/types';
 import { fromCharacters } from './from-characters';
 
+const SYMBOL_CHARS = [
+  '!',
+  '"',
+  '#',
+  '$',
+  '%',
+  '&',
+  "'",
+  '(',
+  ')',
+  '*',
+  '+',
+  ',',
+  '-',
+  '.',
+  '/',
+  ':',
+  ';',
+  '<',
+  '=',
+  '>',
+  '?',
+  '@',
+  '[',
+  '\\',
+  ']',
+  '^',
+  '_',
+  '`',
+  '{',
+  '|',
+  '}',
+  '~',
+];
+
 /**
  * Returns a string containing only special characters from the following list:
  *
@@ -25,42 +60,5 @@ export function symbol(
   fakerCore: FakerCore,
   length: number | NumberRange = 1
 ): string {
-  return fromCharacters(
-    fakerCore,
-    [
-      '!',
-      '"',
-      '#',
-      '$',
-      '%',
-      '&',
-      "'",
-      '(',
-      ')',
-      '*',
-      '+',
-      ',',
-      '-',
-      '.',
-      '/',
-      ':',
-      ';',
-      '<',
-      '=',
-      '>',
-      '?',
-      '@',
-      '[',
-      '\\',
-      ']',
-      '^',
-      '_',
-      '`',
-      '{',
-      '|',
-      '}',
-      '~',
-    ],
-    length
-  );
+  return fromCharacters(fakerCore, SYMBOL_CHARS, length);
 }

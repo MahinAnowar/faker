@@ -3,6 +3,31 @@ import type { Casing, NumberRange } from '../../utils/types';
 import { rangeToNumber } from '../helpers/range-to-number';
 import { fromCharacters } from './from-characters';
 
+const HEX_CHARS = [
+  '0',
+  '1',
+  '2',
+  '3',
+  '4',
+  '5',
+  '6',
+  '7',
+  '8',
+  '9',
+  'a',
+  'b',
+  'c',
+  'd',
+  'e',
+  'f',
+  'A',
+  'B',
+  'C',
+  'D',
+  'E',
+  'F',
+];
+
 /**
  * Returns a [hexadecimal](https://en.wikipedia.org/wiki/Hexadecimal) string.
  *
@@ -54,34 +79,7 @@ export function hexadecimal(
     return prefix;
   }
 
-  let wholeString = fromCharacters(
-    fakerCore,
-    [
-      '0',
-      '1',
-      '2',
-      '3',
-      '4',
-      '5',
-      '6',
-      '7',
-      '8',
-      '9',
-      'a',
-      'b',
-      'c',
-      'd',
-      'e',
-      'f',
-      'A',
-      'B',
-      'C',
-      'D',
-      'E',
-      'F',
-    ],
-    length
-  );
+  let wholeString = fromCharacters(fakerCore, HEX_CHARS, length);
 
   if (casing === 'upper') {
     wholeString = wholeString.toUpperCase();
