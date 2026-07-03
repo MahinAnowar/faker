@@ -1,12 +1,19 @@
-import { FakerError } from '../../errors/faker-error';
-import { CROCKFORDS_BASE32, dateToBase32 } from '../../internal/base32';
-import { toDate } from '../../internal/date';
 import { SimpleModuleBase } from '../../internal/module-base';
 import type { LiteralUnion } from '../../internal/types';
 import type { Casing, NumberRange } from '../../utils/types';
 import type { AlphaChar, AlphaNumericChar, NumericChar } from './_types';
-import { DIGIT_CHARS, LOWER_CHARS, UPPER_CHARS } from './_types';
-import { uuidV4, uuidV7 } from './_uuid';
+import { alpha as stringAlpha } from './alpha';
+import { alphanumeric as stringAlphanumeric } from './alphanumeric';
+import { binary as stringBinary } from './binary';
+import { fromCharacters as stringFromCharacters } from './from-characters';
+import { hexadecimal as stringHexadecimal } from './hexadecimal';
+import { nanoid as stringNanoid } from './nanoid';
+import { numeric as stringNumeric } from './numeric';
+import { octal as stringOctal } from './octal';
+import { sample as stringSample } from './sample';
+import { symbol as stringSymbol } from './symbol';
+import { ulid as stringUlid } from './ulid';
+import { uuid as stringUuid } from './uuid';
 
 /**
  * Module to generate string related entries.
@@ -46,26 +53,7 @@ export class StringModule extends SimpleModuleBase {
     characters: string | ReadonlyArray<string>,
     length: number | NumberRange = 1
   ): string {
-    length = this.faker.helpers.rangeToNumber(length);
-    if (length <= 0) {
-      return '';
-    }
-
-    if (typeof characters === 'string') {
-      characters = [...characters];
-    }
-
-    if (characters.length === 0) {
-      throw new FakerError(
-        'Unable to generate string: No characters to select from.'
-      );
-    }
-
-    return this.faker.helpers
-      .multiple(() => this.faker.helpers.arrayElement(characters as string[]), {
-        count: length,
-      })
-      .join('');
+    return stringFromCharacters(this.faker.fakerCore, characters, length);
   }
 
   /**
@@ -110,45 +98,7 @@ export class StringModule extends SimpleModuleBase {
           exclude?: ReadonlyArray<LiteralUnion<AlphaChar>> | string;
         } = {}
   ): string {
-    if (typeof options === 'number') {
-      options = {
-        length: options,
-      };
-    }
-
-    const length = this.faker.helpers.rangeToNumber(options.length ?? 1);
-    if (length <= 0) {
-      return '';
-    }
-
-    const { casing = 'mixed' } = options;
-    let { exclude = [] } = options;
-
-    if (typeof exclude === 'string') {
-      exclude = [...exclude];
-    }
-
-    let charsArray: string[];
-    switch (casing) {
-      case 'upper': {
-        charsArray = [...UPPER_CHARS];
-        break;
-      }
-
-      case 'lower': {
-        charsArray = [...LOWER_CHARS];
-        break;
-      }
-
-      case 'mixed': {
-        charsArray = [...LOWER_CHARS, ...UPPER_CHARS];
-        break;
-      }
-    }
-
-    charsArray = charsArray.filter((elem) => !exclude.includes(elem));
-
-    return this.fromCharacters(charsArray, length);
+    return stringAlpha(this.faker.fakerCore, options);
   }
 
   /**
@@ -193,46 +143,7 @@ export class StringModule extends SimpleModuleBase {
           exclude?: ReadonlyArray<LiteralUnion<AlphaNumericChar>> | string;
         } = {}
   ): string {
-    if (typeof options === 'number') {
-      options = {
-        length: options,
-      };
-    }
-
-    const length = this.faker.helpers.rangeToNumber(options.length ?? 1);
-    if (length <= 0) {
-      return '';
-    }
-
-    const { casing = 'mixed' } = options;
-    let { exclude = [] } = options;
-
-    if (typeof exclude === 'string') {
-      exclude = [...exclude];
-    }
-
-    let charsArray = [...DIGIT_CHARS];
-
-    switch (casing) {
-      case 'upper': {
-        charsArray.push(...UPPER_CHARS);
-        break;
-      }
-
-      case 'lower': {
-        charsArray.push(...LOWER_CHARS);
-        break;
-      }
-
-      case 'mixed': {
-        charsArray.push(...LOWER_CHARS, ...UPPER_CHARS);
-        break;
-      }
-    }
-
-    charsArray = charsArray.filter((elem) => !exclude.includes(elem));
-
-    return this.fromCharacters(charsArray, length);
+    return stringAlphanumeric(this.faker.fakerCore, options);
   }
 
   /**
@@ -269,11 +180,7 @@ export class StringModule extends SimpleModuleBase {
       prefix?: string;
     } = {}
   ): string {
-    const { prefix = '0b' } = options;
-
-    let result = prefix;
-    result += this.fromCharacters(['0', '1'], options.length ?? 1);
-    return result;
+    return stringBinary(this.faker.fakerCore, options);
   }
 
   /**
@@ -310,14 +217,7 @@ export class StringModule extends SimpleModuleBase {
       prefix?: string;
     } = {}
   ): string {
-    const { prefix = '0o' } = options;
-
-    let result = prefix;
-    result += this.fromCharacters(
-      ['0', '1', '2', '3', '4', '5', '6', '7'],
-      options.length ?? 1
-    );
-    return result;
+    return stringOctal(this.faker.fakerCore, options);
   }
 
   /**
@@ -363,47 +263,7 @@ export class StringModule extends SimpleModuleBase {
       prefix?: string;
     } = {}
   ): string {
-    const { casing = 'mixed', prefix = '0x' } = options;
-    const length = this.faker.helpers.rangeToNumber(options.length ?? 1);
-    if (length <= 0) {
-      return prefix;
-    }
-
-    let wholeString = this.fromCharacters(
-      [
-        '0',
-        '1',
-        '2',
-        '3',
-        '4',
-        '5',
-        '6',
-        '7',
-        '8',
-        '9',
-        'a',
-        'b',
-        'c',
-        'd',
-        'e',
-        'f',
-        'A',
-        'B',
-        'C',
-        'D',
-        'E',
-        'F',
-      ],
-      length
-    );
-
-    if (casing === 'upper') {
-      wholeString = wholeString.toUpperCase();
-    } else if (casing === 'lower') {
-      wholeString = wholeString.toLowerCase();
-    }
-
-    return `${prefix}${wholeString}`;
+    return stringHexadecimal(this.faker.fakerCore, options);
   }
 
   /**
@@ -450,50 +310,7 @@ export class StringModule extends SimpleModuleBase {
           exclude?: ReadonlyArray<LiteralUnion<NumericChar>> | string;
         } = {}
   ): string {
-    if (typeof options === 'number') {
-      options = {
-        length: options,
-      };
-    }
-
-    const length = this.faker.helpers.rangeToNumber(options.length ?? 1);
-    if (length <= 0) {
-      return '';
-    }
-
-    const { allowLeadingZeros = true } = options;
-    let { exclude = [] } = options;
-
-    if (typeof exclude === 'string') {
-      exclude = [...exclude];
-    }
-
-    const allowedDigits = DIGIT_CHARS.filter(
-      (digit) => !exclude.includes(digit)
-    );
-
-    if (
-      allowedDigits.length === 0 ||
-      (allowedDigits.length === 1 &&
-        !allowLeadingZeros &&
-        allowedDigits[0] === '0')
-    ) {
-      throw new FakerError(
-        'Unable to generate numeric string, because all possible digits are excluded.'
-      );
-    }
-
-    let result = '';
-
-    if (!allowLeadingZeros && !exclude.includes('0')) {
-      result += this.faker.helpers.arrayElement(
-        allowedDigits.filter((digit) => digit !== '0')
-      );
-    }
-
-    result += this.fromCharacters(allowedDigits, length - result.length);
-
-    return result;
+    return stringNumeric(this.faker.fakerCore, options);
   }
 
   /**
@@ -511,22 +328,7 @@ export class StringModule extends SimpleModuleBase {
    * @since 8.0.0
    */
   sample(length: number | NumberRange = 10): string {
-    length = this.faker.helpers.rangeToNumber(length);
-
-    const charCodeOption = {
-      min: 33,
-      max: 125,
-    };
-
-    let returnString = '';
-
-    while (returnString.length < length) {
-      returnString += String.fromCodePoint(
-        this.faker.number.int(charCodeOption)
-      );
-    }
-
-    return returnString;
+    return stringSample(this.faker.fakerCore, length);
   }
 
   /**
@@ -562,7 +364,7 @@ export class StringModule extends SimpleModuleBase {
    * @param options.version The specific UUID version to use.
    * @param options.refDate The timestamp to encode into the uuid.
    * The encoded timestamp is represented by the first 12 characters of the result.
-   * Defaults to `faker.defaultRefDate()`.
+   * Defaults to `faker.getDefaultRefDate()`.
    *
    * @example
    * faker.string.uuid() // '019be2c5-58de-70fe-a693-2ccbff1f0780'
@@ -589,7 +391,7 @@ export class StringModule extends SimpleModuleBase {
    * @param options.version The specific UUID version to use. Defaults to `4`.
    * @param options.refDate The timestamp to encode into the UUID.
    * This parameter is only relevant for UUID v7.
-   * Defaults to `faker.defaultRefDate()`.
+   * Defaults to `faker.getDefaultRefDate()`.
    *
    * @example
    * faker.string.uuid() // '4136cd0b-d90b-4af7-b485-5d1ded8db252'
@@ -618,16 +420,7 @@ export class StringModule extends SimpleModuleBase {
       refDate?: string | Date | number;
     } = {}
   ): string {
-    const { version = 4, refDate = this.faker.defaultRefDate() } = options;
-    switch (version) {
-      case 7: {
-        return uuidV7(this.faker, toDate(refDate));
-      }
-
-      default: {
-        return uuidV4(this.faker);
-      }
-    }
+    return stringUuid(this.faker.fakerCore, options);
   }
 
   /**
@@ -636,7 +429,7 @@ export class StringModule extends SimpleModuleBase {
    * @param options The optional options object.
    * @param options.refDate The timestamp to encode into the ULID.
    * The encoded timestamp is represented by the first 10 characters of the result.
-   * Defaults to `faker.defaultRefDate()`.
+   * Defaults to `faker.getDefaultRefDate()`.
    *
    * @example
    * faker.string.ulid() // '01ARZ3NDEKTSV4RRFFQ69G5FAV'
@@ -655,10 +448,7 @@ export class StringModule extends SimpleModuleBase {
       refDate?: string | Date | number;
     } = {}
   ): string {
-    const { refDate = this.faker.defaultRefDate() } = options;
-    const date = toDate(refDate);
-
-    return dateToBase32(date) + this.fromCharacters(CROCKFORDS_BASE32, 16);
+    return stringUlid(this.faker.fakerCore, options);
   }
 
   /**
@@ -676,31 +466,7 @@ export class StringModule extends SimpleModuleBase {
    * @since 8.0.0
    */
   nanoid(length: number | NumberRange = 21): string {
-    length = this.faker.helpers.rangeToNumber(length);
-    if (length <= 0) {
-      return '';
-    }
-
-    const generators = [
-      {
-        value: () => this.alphanumeric(1),
-        // a-z is 26 characters
-        // this times 2 for upper & lower case is 52
-        // add all numbers 0-9 (10 in total) you get 62
-        weight: 62,
-      },
-      {
-        value: () => this.faker.helpers.arrayElement(['_', '-']),
-        weight: 2,
-      },
-    ];
-    let result = '';
-    while (result.length < length) {
-      const charGen = this.faker.helpers.weightedArrayElement(generators);
-      result += charGen();
-    }
-
-    return result;
+    return stringNanoid(this.faker.fakerCore, length);
   }
 
   /**
@@ -722,42 +488,6 @@ export class StringModule extends SimpleModuleBase {
    * @since 8.0.0
    */
   symbol(length: number | NumberRange = 1): string {
-    return this.fromCharacters(
-      [
-        '!',
-        '"',
-        '#',
-        '$',
-        '%',
-        '&',
-        "'",
-        '(',
-        ')',
-        '*',
-        '+',
-        ',',
-        '-',
-        '.',
-        '/',
-        ':',
-        ';',
-        '<',
-        '=',
-        '>',
-        '?',
-        '@',
-        '[',
-        '\\',
-        ']',
-        '^',
-        '_',
-        '`',
-        '{',
-        '|',
-        '}',
-        '~',
-      ],
-      length
-    );
+    return stringSymbol(this.faker.fakerCore, length);
   }
 }
